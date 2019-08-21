@@ -182,7 +182,7 @@ public final class ConvertCPMojo
                         bundleStartOrder,
                         fmOutput,
                         artifactIdOverride,
-//                        fmPrefix,
+                        fmPrefix,
                         properties
                     )
                 )
