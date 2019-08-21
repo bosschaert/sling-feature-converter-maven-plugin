@@ -97,7 +97,7 @@ equivalent so that we can launch it together with the converter CP packages late
          <plugin>
             <groupId>org.apache.sling</groupId>
             <artifactId>sling-feature-converter-maven-plugin</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>${project.version}</version>
             <extensions>true</extensions>
             <executions>
                 <execution>
@@ -172,7 +172,7 @@ be relative to the basedir and cannot be absolute):
         <plugin>
             <groupId>org.apache.sling</groupId>
             <artifactId>slingfeature-maven-plugin</artifactId>
-            <version>1.0.5-SNAPSHOT</version>
+            <version>1.0.7-SNAPSHOT</version>
             <extensions>true</extensions>
             <configuration>
                 <features>target/fm</features>
@@ -187,6 +187,7 @@ Now we can aggregate, collect them into a single FM file (attach) and verify all
                     <phase>generate-test-sources</phase>
                     <goals>
                         <goal>aggregate-features</goal>
+                        <generatedFeatures>${sp}basedir}/target/fm</generatedFeatures>
                     </goals>
                     <configuration>
                         <aggregates>
@@ -245,20 +246,36 @@ if the project is buil with goal **install** and profile **launch** (mvn install
                 <plugin>
                     <groupId>org.apache.sling</groupId>
                     <artifactId>slingfeature-maven-plugin</artifactId>
-                    <version>${project.version}</version>
+                    <version>1.0.7-SNAPSHOT</version>
                     <extensions>true</extensions>
-                    <executions>
-                        <execution>
-                            <id>launch-it</id>
-                            <phase>install</phase>
-                            <goals>
-                                <goal>launch-features</goal>
-                            </goals>
-                            <configuration>
-                                <featureFile>${sp}project.build.directory${ep}/slingfeature-tmp/feature-example-runtime.json</featureFile>
-                            </configuration>
-                        </execution>
-                    </executions>
+                        <dependencies>
+                            <!-- For now the Extension Content has to be placed ahead of the launcher to make CP
+                                 deployment work (see SLING-8483) -->
+                            <dependency>
+                                <groupId>org.apache.sling</groupId>
+                                <artifactId>org.apache.sling.feature.extension.content</artifactId>
+                                <version>1.0.5-SNAPSHOT</version>
+                            </dependency>
+                            <dependency>
+                                <groupId>org.apache.sling</groupId>
+                                <artifactId>org.apache.sling.feature.launcher</artifactId>
+                                <version>1.0.7-SNAPSHOT</version>
+                            </dependency>
+                        </dependencies>
+                        <executions>
+                            <execution>
+                                <id>launch-it</id>
+                                <phase>install</phase>
+                                <goals>
+                                    <goal>launch-features</goal>
+                                </goals>
+                                <configuration>
+                                    <selection>
+                                        <includeClassifier>example-runtime</includeClassifier>
+                                    </selection>
+                                </configuration>
+                            </execution>
+                        </executions>
                 </plugin>
             </plugins>
         </build>

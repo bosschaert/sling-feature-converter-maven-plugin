@@ -35,3 +35,21 @@ and its converted ZIP files
 * **convert-pom**: Converts Provisioning Models into Feature Models
 
 See the Site documentation for further info.
+
+## Content Package Handling
+
+The installation of Converted Content Packages has be difficult at times.
+
+These are the things fo far that should help making this easier:
+1. Make sure that you use the latest code base
+2. Make sure that during the launch:
+    1. Sling Feature Extension Content is added first as Plugin Dependency
+       (any extension should be added before the Launcher)
+    2. Add Sling Feature Launcher as Plugin Dependency afterwards
+    3. Make sure that the **JCR Package Init** is added as Feature
+       (see Site Documentation **Usage**)
+3. After Feature is up and running log into OSGi Console and check
+   **OSGi Installer** to make sure there are no **Untransformed
+   Resources**
+4. During development make sure that the **Launcher** folder is deleted
+   periodically to avoid side effects from previous launches
