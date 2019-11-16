@@ -17,7 +17,9 @@
 package org.apache.sling.cpconverter.maven.mojos;
 
 import org.apache.maven.artifact.Artifact;
+import org.apache.maven.artifact.ArtifactUtils;
 import org.apache.maven.artifact.DefaultArtifact;
+import org.apache.maven.artifact.handler.DefaultArtifactHandler;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -78,6 +80,8 @@ public final class ConvertCPMojo
 
     public static final String CFG_CONTENT_PACKAGES = "packages";
 
+    public static final String CFG_IS_CONTENT_PACKAGE = "isContentPackage";
+
     public static final boolean DEFAULT_STRING_VALIDATION = false;
 
     public static final boolean DEFAULT_MERGE_CONFIGURATIONS = false;
@@ -89,6 +93,8 @@ public final class ConvertCPMojo
     public static final String DEFAULT_CONVERTED_CP_OUTPUT_DIRECTORY = "${project.build.directory}/cp-conversion";
 
     public static final String DEFAULT_FM_OUTPUT_DIRECTORY = DEFAULT_CONVERTED_CP_OUTPUT_DIRECTORY + "/fm.out";
+
+    public static final boolean DEFAULT_IS_CONTENT_PACKAGE = false;
 
     /**
      * If set to {@code true} the Content Package is strictly validated.
@@ -151,6 +157,12 @@ public final class ConvertCPMojo
     @Parameter(property = CFG_CONTENT_PACKAGES)
     private List<ContentPackage> contentPackages;
 
+    /**
+     * If set to {@code true} the module is handled as Content Package
+     */
+    @Parameter(property = CFG_IS_CONTENT_PACKAGE, defaultValue = DEFAULT_IS_CONTENT_PACKAGE + "")
+    private boolean isContentPackage;
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         // Un-encode a given Artifact Override Id
@@ -207,18 +219,14 @@ public final class ConvertCPMojo
                 File targetFile = new File(targetPath);
                 if (targetFile.exists() && targetFile.isFile() && targetFile.canRead()) {
                     converter.convert(project.getArtifact().getFile());
-//                    Artifact convertedPackage = new DefaultArtifact(
-//                        project.getGroupId(), project.getArtifactId(), project.getVersion(),
-//                        "compile", ZIP_TYPE, PACKAGE_CLASSIFIER, artifactHandlerManager.getArtifactHandler(ZIP_TYPE)
-//                    );
-//                    installConvertedCP(convertedPackage);
                 } else {
                     getLog().error("Artifact is not found: " + targetPath);
                 }
             } else {
                 for(ContentPackage contentPackage: contentPackages) {
-                    getLog().info("Content Package Artifact File: " + contentPackage.toString());
+                    getLog().info("Content Package Artifact File: " + contentPackage.toString() + ", is module CP: " + isContentPackage);
                     contentPackage.setExcludeTransitive(true);
+                    contentPackage.setModuleIsContentPackage(isContentPackage);
                     final Collection<Artifact> artifacts = contentPackage.getMatchingArtifacts(project);
                     if (artifacts.isEmpty()) {
                         getLog().warn("No matching artifacts for " + contentPackage);
@@ -227,6 +235,7 @@ public final class ConvertCPMojo
                     getLog().info("Target Convert CP of --- " + contentPackage + " ---");
                     for (final Artifact artifact : artifacts) {
                         final File source = artifact.getFile();
+                        getLog().info("Artifact: '" + artifact + "', source file: '" + source + "'");
                         if (source.exists() && source.isFile() && source.canRead()) {
                             converter.convert(source);
                             Artifact convertedPackage = new DefaultArtifact(
@@ -258,6 +267,9 @@ public final class ConvertCPMojo
                 File destFolder = new File(userHome, ".m2/repository");
                 if(destFolder.isDirectory()) {
                     copyFiles(convertedCPOutput, destFolder);
+                    if(isContentPackage) {
+                        installFMDescriptor(project.getArtifact());
+                    }
                 }
             }
         }
@@ -312,24 +324,29 @@ public final class ConvertCPMojo
         }
     }
 
-    private void installConvertedCP(Artifact artifact) throws MojoFailureException, MojoExecutionException {
+    private void installFMDescriptor(Artifact artifact) {
         if(installConvertedCP) {
             Collection<Artifact> artifacts = Collections.synchronizedCollection(new ArrayList<>());
-            // Rebuild the converted package path
-            String convertedPackagePath = artifact.getGroupId().replaceAll("\\.", "/")
-                + "/" + artifact.getArtifactId()
-                + "/" + artifact.getVersion()
-                + "/" + artifact.getArtifactId()
-                + "-" + artifact.getVersion()
-                + "-" + PACKAGE_CLASSIFIER
-                + "." + ZIP_TYPE;
-            File convertedPackageFile = new File(convertedCPOutput, convertedPackagePath);
-            if(convertedPackageFile.exists() && convertedPackageFile.canRead()) {
-                artifact.setFile(convertedPackageFile);
-                artifacts.add(artifact);
-                installArtifact(mavenSession.getProjectBuildingRequest(), artifacts);
+            // Source FM Descriptor File Path
+            String fmDescriptorFilePath = fmPrefix + artifact.getArtifactId() + ".json";
+            File fmDescriptorFile = new File(fmOutput, fmDescriptorFilePath);
+            if(fmDescriptorFile.exists() && fmDescriptorFile.canRead()) {
+                // Need to create a new Artifact Handler for the different extension and an Artifact to not
+                // change the module artifact
+                DefaultArtifactHandler fmArtifactHandler = new DefaultArtifactHandler("slingosgifeature");
+                DefaultArtifact fmArtifact = new DefaultArtifact(
+                    artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion(),
+                    artifact.getScope(), "slingosgifeature", artifact.getArtifactId(), fmArtifactHandler
+                );
+                fmArtifact.setFile(fmDescriptorFile);
+                artifacts.add(fmArtifact);
+                try {
+                    installArtifact(mavenSession.getProjectBuildingRequest(), artifacts);
+                } catch (MojoFailureException | MojoExecutionException e) {
+                    getLog().error("Failed to install FM Descriptor", e);
+                }
             } else {
-                getLog().error("xCould not find Converted Package: " + convertedPackageFile);
+                getLog().error("Could not find FM Descriptor File: " + fmDescriptorFile);
             }
         }
     }

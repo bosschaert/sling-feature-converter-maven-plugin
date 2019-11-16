@@ -10,7 +10,7 @@
 
 $h2 Usage
 
-$h3 Converting Sling, Project Content Packages and Lauch it
+$h3 Converting Sling, Project Content Packages and Launch it
 
 **Note**: In this sample we use Maven variables like **project.groupId** instead of a static value assuming
 that the project is within the same project that creates the content packages. Adjust that as needed.
@@ -291,3 +291,101 @@ mvn \
     install \
     -P launch
 ```
+
+$h3 Converting a Content Package and Install its Feature Model Descriptor
+
+Instead of building everything local in a dedicated Maven module now each Content Project Module
+can install their generated Feature Module descriptor into the local Maven repository so that it
+can be **included as artifact** when the FM project is assembled.
+
+First in each Content Package module add this plugin configuration to your POM in the **build** section:
+
+```
+<plugin>
+    <groupId>org.apache.sling</groupId>
+    <artifactId>sling-feature-converter-maven-plugin</artifactId>
+    <version>${sp}sling-feature-converter-maven-plugin.version}</version>
+    <extensions>true</extensions>
+    <executions>
+        <execution>
+            <id>convert-cp</id>
+            <phase>verify</phase>
+            <goals>
+                <goal>convert-cp</goal>
+            </goals>
+            <configuration>
+                <artifactIdOverride>${sp}project.groupId}:${sp}project.artifactId}:slingosgifeature:${sp3}filename}}}:${sp}project.version}</artifactIdOverride>
+                <installConvertedCP>true</installConvertedCP>
+                <convertedCPOutput>${sp}project.build.directory}/fm.out</convertedCPOutput>
+                <fmOutput>${sp}project.build.directory}/fm</fmOutput>
+                <fmPrefix>peregrine-</fmPrefix>
+                <isContentPackage>true</isContentPackage>
+                <contentPackages>
+                    <contentPackage>
+                        <groupId>${sp}project.groupId}</groupId>
+                        <artifactId>${sp}project.artifactId}</artifactId>
+                    </contentPackage>
+                </contentPackages>
+            </configuration>
+        </execution>
+    </executions>
+</plugin>
+```
+
+* **sling-feature-converter-maven-plugin.version**: is a property with the version of this plugin to be used (1.0.0-SNAPSHOT for now)
+* **artifactIdOverride**: This should match the Maven Id with this pattern: 'groupId':'artifactId':'type fixed to slingosgifeature':'classifier':'version'
+* **installConvertedCP**: must be set to true otherwise I cannot be assembled later
+* **convertedCPOutput/fmOutput/fmPrefix**: adjust to your preferences
+* **isContentPackage**: must be set to true
+* **contentPackage**: must match the module's properties (later we might remove this)
+
+After a successful build one can check the installation by going to your local Maven repository, got to the location of you artifact and
+check if there is a file with the extension **slingosgifeature**.
+
+Now we can go to the Assembly part and add the FM installed locally as artifact:
+
+```
+<plugin>
+    <groupId>org.apache.sling</groupId>
+    <artifactId>slingfeature-maven-plugin</artifactId>
+    <version>${slingfeature-maven-plugin.version}</version>
+    <extensions>true</extensions>
+    <configuration>
+        <features>target/fm</features>
+        <generatedFeatures>${basedir}/target/fm</generatedFeatures>
+    </configuration>
+    <executions>
+        <execution>
+            <id>aggregate-base-feature</id>
+            <phase>generate-test-sources</phase>
+            <goals>
+                <goal>aggregate-features</goal>
+            </goals>
+            <configuration>
+                <aggregates>
+                    <aggregate>
+                        <classifier>example-runtime</classifier>
+                        <filesInclude>**/*.json</filesInclude>
+                        <configurationOverrides>*=USE_LATEST</configurationOverrides>
+                        <includeArtifact>
+                            <groupId>${project.groupId}</groupId>
+                            <artifactId>base.ui.apps</artifactId>
+                            <version>${project.version}</version>
+                            <classifier>base.ui.apps</classifier>
+                            <type>slingosgifeature</type>
+                        </includeArtifact>
+                        ...
+                    </aggregate>
+                </aggregates>
+            </configuration>
+        </execution>
+    </executions>
+</plugin>
+```
+
+* **slingfeature-maven-plugin.version**: version of the sling feature maven plugin to be used
+* **features/generatedFeatures**: add/set depending on your project
+* **classifier/filesInclude/configurationOverrides**: set depending on your project
+* **includeArtifact**: one entry per Content Package FM. The **groupId**, **artifactId**, **version** and **classifier**
+    must match your FM descriptor
+
