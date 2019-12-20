@@ -131,7 +131,8 @@
                     <postBuildHookScript>verify</postBuildHookScript>
                     <scriptVariables>
                         <plugin.group>${project.groupId}</plugin.group>
-                        <plugin.version>${project.version}</plugin.version>
+                        <!-- The version of the test version which should match the plugin version but maybe off during a release -->
+                        <plugin.version>1.0.2</plugin.version>
                     </scriptVariables>
                 </configuration>
                 <executions>
