@@ -22,26 +22,17 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <artifactId>sling-cpconverter-maven-plugin-test-target-mode</artifactId>
         <groupId>org.apache.sling</groupId>
+        <artifactId>sling-feature-converter-maven-plugin-test-target-mode</artifactId>
         <version>1.0.0-SNAPSHOT</version>
-        <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>sling-cpconverter-maven-plugin-test-target-mode.core</artifactId>
+    <artifactId>sling-feature-converter-maven-plugin-test-target-mode.core</artifactId>
     <packaging>bundle</packaging>
 
-    <name>CQ Converter Test - Core</name>
+    <name>Sling Feature Converter Maven Plugin Test Target Mode - Core</name>
     <description>
-        This is an empty OSGi Bundle which can be used
-        to compile and deploy OSGi Services to Sling.
-
-        This Bundle can be deployed using the Profile
-        "autoInstallBundle" but that should not be used
-        together with the "ui.apps" Profile "autoInstallAll"
-        as they are not deployed the same way and can lead
-        to undesired issues during deployment (bundle not
-        updated or not working at all).
+        Sling Feature Converter Maven Plugin Core Test Bundle in Target Mode
     </description>
 
     <build>
@@ -97,15 +88,6 @@
             <artifactId>org.osgi.service.component.annotations</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.service.metatype.annotations</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.compendium</artifactId>
-        </dependency>
-
-        <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>javax.servlet-api</artifactId>
         </dependency>
@@ -122,29 +104,12 @@
             <artifactId>org.apache.sling.models.api</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.apache.jackrabbit</groupId>
-            <artifactId>jackrabbit-api</artifactId>
-        </dependency>
-
-        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
         </dependency>
-
-        <dependency>
-            <groupId>commons-lang</groupId>
-            <artifactId>commons-lang</artifactId>
-        </dependency>
-
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
         </dependency>
     </dependencies>
-
-    <!--
-        Attention: the autoInstallBundle was removed as deploying bundles directly and through a package is causing
-                   issues with updates and can prevent the latest code of a bundle being deployed.
-                   If you know what you are doing then you can use maven-sling-plugin directly from the Maven CLI.
-    -->
 </project>

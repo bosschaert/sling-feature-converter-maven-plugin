@@ -19,10 +19,11 @@ import java.util.*;
 import org.codehaus.plexus.util.*;
 
     boolean check() {
-        String projectName = "sling-cpconverter-maven-plugin-test-with-param.ui.apps";
-        String projectCoreName = "sling-cpconverter-maven-plugin-test-with-param.core";
-        String projectVersion = "1.0.0-SNAPSHOT";
-        String projectGroup = "org.apache.sling";
+        String projectName = "sling-feature-converter-maven-plugin-test-with-param.ui.apps";
+        String projectCoreName = "sling-feature-converter-maven-plugin-test-with-param.core";
+        // These are <scriptVariables/> provided by the plugin POM
+        String projectVersion = plugin.version;
+        String projectGroup = plugin.group;
         String projectGroupPath = projectGroup.replaceAll("\\.", "/");
 
         File targetFolder = new File(basedir, "ui.apps/target");

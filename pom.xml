@@ -17,7 +17,7 @@
     <parent>
         <groupId>org.apache.sling</groupId>
         <artifactId>sling</artifactId>
-        <version>33</version>
+        <version>35</version>
         <relativePath />
     </parent>
 
@@ -34,11 +34,11 @@
     <properties>
         <sling.java.version>8</sling.java.version>
         <plexus-component-metadata.version>1.7.1</plexus-component-metadata.version>
-        <jackrabbit-spi-commons.version>2.19.1</jackrabbit-spi-commons.version>
-        <jackrabbit-api.version>2.19.3</jackrabbit-api.version>
+        <jackrabbit-spi-commons.version>2.18.4</jackrabbit-spi-commons.version>
+        <jackrabbit-api.version>2.18.4</jackrabbit-api.version>
         <javax.json.version>1.0.4</javax.json.version>
         <org.apache.jackrabbit.vault.version>3.2.8</org.apache.jackrabbit.vault.version>
-        <org.apache.sling.feature.cpconverter.version>0.0.1-SNAPSHOT</org.apache.sling.feature.cpconverter.version>
+        <org.apache.sling.feature.cpconverter.version>1.0.2</org.apache.sling.feature.cpconverter.version>
         <org.apache.sling.feature.modelconverter.version>1.0.8</org.apache.sling.feature.modelconverter.version>
         <org.apache.sling.feature.version>1.1.0</org.apache.sling.feature.version>
         <org.apache.sling.provisioning.model.version>1.8.4</org.apache.sling.provisioning.model.version>
@@ -122,6 +122,10 @@
                         <pomInclude>**/pom.xml</pomInclude>
                     </pomIncludes>
                     <postBuildHookScript>verify</postBuildHookScript>
+                    <scriptVariables>
+                        <plugin.group>${project.groupId}</plugin.group>
+                        <plugin.version>${project.version}</plugin.version>
+                    </scriptVariables>
                 </configuration>
                 <executions>
                     <execution>
@@ -230,6 +234,7 @@
         <dependency>
             <groupId>com.google.code.findbugs</groupId>
             <artifactId>jsr305</artifactId>
+            <version>3.0.2</version>
         </dependency>
 
         <!-- testing -->

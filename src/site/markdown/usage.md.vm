@@ -6,7 +6,16 @@
 #set($sp2 = '${{')
 #set($sp3 = '${{{')
 #set($ep = '}')
-
+## Version for the JCR Packageinit
+#set($jpiv = '0.0.1-SNAPSHOT')
+## Version for the Slingfeature Maven Plugin
+#set($sfmpv = '1.1.12')
+## Version for the Sling Feature Extension Content
+#set($sfecv = '1.0.5-SNAPSHOT')
+## Version for the Sling Feature Launcher
+#set($sflv = '1.1.0')
+## Version for this Plugin (Sling Feature Converter Maven Plugin)
+#set($sfcmpv = '1.0.0-SNAPSHOT')
 
 $h2 Usage
 
@@ -37,7 +46,7 @@ the project is launched:
     <dependency>
         <groupId>org.apache.sling</groupId>
         <artifactId>org.apache.sling.jcr.packageinit</artifactId>
-        <version>0.0.1-SNAPSHOT</version>
+        <version>${jpiv}</version>
     </dependency>
 ...
 </dependencies>
@@ -53,7 +62,7 @@ here is placed in the **src/main/resouces/fm** folder named **sling_packageinit.
     },
     "bundles":[
         {
-            "id":"org.apache.sling:org.apache.sling.jcr.packageinit:0.0.1-SNAPSHOT",
+            "id":"org.apache.sling:org.apache.sling.jcr.packageinit:${jpiv}",
             "start-level":"10"
         }
     ]
@@ -172,7 +181,7 @@ be relative to the basedir and cannot be absolute):
         <plugin>
             <groupId>org.apache.sling</groupId>
             <artifactId>slingfeature-maven-plugin</artifactId>
-            <version>1.0.7-SNAPSHOT</version>
+            <version>${sfmpv}</version>
             <extensions>true</extensions>
             <configuration>
                 <features>target/fm</features>
@@ -246,7 +255,7 @@ if the project is buil with goal **install** and profile **launch** (mvn install
                 <plugin>
                     <groupId>org.apache.sling</groupId>
                     <artifactId>slingfeature-maven-plugin</artifactId>
-                    <version>1.0.7-SNAPSHOT</version>
+                    <version>${sfmpv}</version>
                     <extensions>true</extensions>
                         <dependencies>
                             <!-- For now the Extension Content has to be placed ahead of the launcher to make CP
@@ -254,12 +263,12 @@ if the project is buil with goal **install** and profile **launch** (mvn install
                             <dependency>
                                 <groupId>org.apache.sling</groupId>
                                 <artifactId>org.apache.sling.feature.extension.content</artifactId>
-                                <version>1.0.5-SNAPSHOT</version>
+                                <version>${sfecv}</version>
                             </dependency>
                             <dependency>
                                 <groupId>org.apache.sling</groupId>
                                 <artifactId>org.apache.sling.feature.launcher</artifactId>
-                                <version>1.0.7-SNAPSHOT</version>
+                                <version>${sflv}</version>
                             </dependency>
                         </dependencies>
                         <executions>
@@ -332,7 +341,7 @@ First in each Content Package module add this plugin configuration to your POM i
 </plugin>
 ```
 
-* **sling-feature-converter-maven-plugin.version**: is a property with the version of this plugin to be used (1.0.0-SNAPSHOT for now)
+* **sling-feature-converter-maven-plugin.version**: is a property with the version of this plugin to be used (${sfcmpv} for now)
 * **artifactIdOverride**: This should match the Maven Id with this pattern: 'groupId':'artifactId':'type fixed to slingosgifeature':'classifier':'version'
 * **installConvertedCP**: must be set to true otherwise I cannot be assembled later
 * **convertedCPOutput/fmOutput/fmPrefix**: adjust to your preferences

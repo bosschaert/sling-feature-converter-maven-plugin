@@ -23,44 +23,29 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <artifactId>sling-cpconverter-maven-plugin-test-no-param</artifactId>
         <groupId>org.apache.sling</groupId>
+        <artifactId>sling-feature-converter-maven-plugin-test-no-param</artifactId>
         <version>1.0.0-SNAPSHOT</version>
-        <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>sling-cpconverter-maven-plugin-test-no-param.ui.apps</artifactId>
+    <artifactId>sling-feature-converter-maven-plugin-test-no-param.ui.apps</artifactId>
     <packaging>content-package</packaging>
 
-    <name>CQ Converter Test - UI Apps</name>
+    <name>Sling Feature Converter Maven Plugin No Parameter Test - UI Apps</name>
     <description>
-        This is an empty JCR Package where the JCR Content
-        can be deployed with.
+        Sling Feature Converter Maven Plugin Core Test Content Bundle with No Parameter
     </description>
-    <!-- NOTE:
-        For a 'not all' package this JCR Package will embedd
-        the "core" bundle. It can be deployed with the
-        "autoInstallPackage" profile.
 
-        For an 'all' package this only provides the content
-        of the project which is deployed in the root with
-        the "autoInstallAll" profile.
-
-        It is advisable to deploy any bundles or packages
-        in one manner as deploying bundles inside a package
-        and through the System Console can lead to unexpected
-        and errorneous situations.
-    -->
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>sling-cpconverter-maven-plugin-test-no-param.core</artifactId>
+            <artifactId>sling-feature-converter-maven-plugin-test-no-param.core</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.feature.cpconverter</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
+            <version>${org.apache.sling.feature.cpconverter.version}</version>
         </dependency>
     </dependencies>
 
@@ -75,7 +60,7 @@
                     <embeddeds>
                         <embedded>
                             <groupId>${project.groupId}</groupId>
-                            <artifactId>sling-cpconverter-maven-plugin-test-no-param.core</artifactId>
+                            <artifactId>sling-feature-converter-maven-plugin-test-no-param.core</artifactId>
                             <filter>true</filter>
                         </embedded>
                     </embeddeds>
@@ -99,26 +84,4 @@
             </plugin>
         </plugins>
     </build>
-    <profiles>
-        <!-- ATTENTION: It is highly recomended not to deploy this with this Profile if this Package was or will be deployed with the All package -->
-        <profile>
-            <id>autoInstallPackage</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>io.wcm.maven.plugins</groupId>
-                        <artifactId>wcmio-content-package-maven-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>install-package</id>
-                                <goals>
-                                    <goal>install</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
 </project>
