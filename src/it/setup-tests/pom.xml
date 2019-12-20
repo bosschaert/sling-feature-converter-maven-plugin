@@ -17,7 +17,7 @@
     <groupId>org.apache.sling</groupId>
     <artifactId>sling-feature-converter-maven-plugin-test-parent</artifactId>
     <packaging>pom</packaging>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.2</version>
 
     <name>Apache Sling Features Converter Maven Plugin test - Parent</name>
     <description>

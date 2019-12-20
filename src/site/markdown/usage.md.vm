@@ -15,7 +15,7 @@
 ## Version for the Sling Feature Launcher
 #set($sflv = '1.1.0')
 ## Version for this Plugin (Sling Feature Converter Maven Plugin)
-#set($sfcmpv = '1.0.0-SNAPSHOT')
+#set($sfcmpv = '1.0.2')
 
 $h2 Usage
 
