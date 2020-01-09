@@ -124,10 +124,8 @@
                     <debug>true</debug>
                     <projectsDirectory>src/it</projectsDirectory>
                     <cloneProjectsTo>${project.build.directory}/it</cloneProjectsTo>
-<!-- TODO: it would great to install the test artifacts locally but this will only work if CP Converter is released -> Activate when it is released-->
-<!--                    <localRepositoryPath>${project.build.directory}/it-repo</localRepositoryPath>-->
                     <pomIncludes>
-                        <pomInclude>**/pom.xml</pomInclude>
+                        <pomInclude>*/pom.xml</pomInclude>
                     </pomIncludes>
                     <postBuildHookScript>verify</postBuildHookScript>
                     <scriptVariables>

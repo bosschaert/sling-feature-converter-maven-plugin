@@ -65,8 +65,8 @@
                             <goal>convert-cp</goal>
                         </goals>
                         <configuration>
-                            <!-- NOTE: ${} is replaced no matter what so this trick seems to work by adding a zero-width-whitespace character (&#8203;)-->
-                            <artifactIdOverride>$&#8203;{project.groupId}:$&#8203;{project.artifactId}:slingosgifeature:@project.artifactId@:$&#8203;{project.version}</artifactIdOverride>
+                            <!-- On some systems the trick with the zero-width (&#8203;) space does not work so we do test it w/o place holders -->
+                            <artifactIdOverride>${project.groupId}:${project.artifactId}:slingosgifeature:@project.artifactId@:${project.version}</artifactIdOverride>
                             <installConvertedPackage>true</installConvertedPackage>
                             <contentPackages>
                                 <contentPackage>
