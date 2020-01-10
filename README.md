@@ -6,7 +6,7 @@
 
 This module is part of the [Apache Sling](https://sling.apache.org) project.
 
-This plugin provides the means to convert both Content Packages as well as
+This Apache Maven plugin provides the means to convert both Content Packages as well as
 Provisioning Models into Feature Models through a POM file.
 
 # Introduction
@@ -38,9 +38,9 @@ See the Site documentation for further info.
 
 ## Content Package Handling
 
-The installation of Converted Content Packages has be difficult at times.
+The installation of Converted Content Packages has been difficult at times.
 
-These are the things fo far that should help making this easier:
+These are the things so far that should help making this easier:
 1. Make sure that you use the latest code base
 2. Make sure that during the launch:
     1. Sling Feature Extension Content is added first as Plugin Dependency
@@ -48,8 +48,8 @@ These are the things fo far that should help making this easier:
     2. Add Sling Feature Launcher as Plugin Dependency afterwards
     3. Make sure that the **JCR Package Init** is added as Feature
        (see Site Documentation **Usage**)
-3. After Feature is up and running log into OSGi Console and check
-   **OSGi Installer** to make sure there are no **Untransformed
+3. After the Feature is up and running log into OSGi Console and check
+   the **OSGi Installer** page to make sure there are no **Untransformed
    Resources**
 4. During development make sure that the **Launcher** folder is deleted
    periodically to avoid side effects from previous launches
