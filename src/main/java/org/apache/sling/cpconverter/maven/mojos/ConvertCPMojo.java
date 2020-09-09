@@ -17,11 +17,11 @@
 package org.apache.sling.cpconverter.maven.mojos;
 
 import org.apache.maven.artifact.Artifact;
-import org.apache.maven.artifact.ArtifactUtils;
 import org.apache.maven.artifact.DefaultArtifact;
 import org.apache.maven.artifact.handler.DefaultArtifactHandler;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.ProjectBuildingRequest;
@@ -32,6 +32,8 @@ import org.apache.sling.feature.cpconverter.artifacts.DefaultArtifactsDeployer;
 import org.apache.sling.feature.cpconverter.features.DefaultFeaturesManager;
 import org.apache.sling.feature.cpconverter.handlers.DefaultEntryHandlersManager;
 import org.apache.sling.feature.cpconverter.vltpkg.DefaultPackagesEventsEmitter;
+import org.eclipse.aether.RepositorySystem;
+import org.eclipse.aether.RepositorySystemSession;
 
 import java.io.File;
 import java.io.IOException;
@@ -163,6 +165,12 @@ public final class ConvertCPMojo
     @Parameter(property = CFG_IS_CONTENT_PACKAGE, defaultValue = DEFAULT_IS_CONTENT_PACKAGE + "")
     private boolean isContentPackage;
 
+    @Parameter(defaultValue="${repositorySystemSession}")
+    private RepositorySystemSession repoSession;
+
+    @Component
+    private RepositorySystem repoSystem;
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         // Un-encode a given Artifact Override Id
@@ -227,7 +235,7 @@ public final class ConvertCPMojo
                     getLog().info("Content Package Artifact File: " + contentPackage.toString() + ", is module CP: " + isContentPackage);
                     contentPackage.setExcludeTransitive(true);
                     contentPackage.setModuleIsContentPackage(isContentPackage);
-                    final Collection<Artifact> artifacts = contentPackage.getMatchingArtifacts(project);
+                    final Collection<Artifact> artifacts = contentPackage.getMatchingArtifacts(project, repoSystem, repoSession);
                     if (artifacts.isEmpty()) {
                         getLog().warn("No matching artifacts for " + contentPackage);
                         continue;

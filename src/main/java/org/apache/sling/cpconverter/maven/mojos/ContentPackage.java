@@ -17,16 +17,26 @@
 package org.apache.sling.cpconverter.maven.mojos;
 
 import org.apache.maven.artifact.Artifact;
+import org.apache.maven.artifact.DefaultArtifact;
 import org.apache.maven.project.MavenProject;
+import org.eclipse.aether.RepositoryException;
+import org.eclipse.aether.RepositorySystem;
+import org.eclipse.aether.RepositorySystemSession;
+import org.eclipse.aether.collection.CollectRequest;
+import org.eclipse.aether.graph.Dependency;
+import org.eclipse.aether.graph.DependencyNode;
+import org.eclipse.aether.resolution.DependencyRequest;
+import org.eclipse.aether.resolution.DependencyResult;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public class ContentPackage {
 
@@ -48,7 +58,7 @@ public class ContentPackage {
     private boolean excludeTransitive;
 
     private boolean moduleIsContentPackage;
-    
+
     public void setGroupId(String groupId) {
         this.groupId = groupId == null ? "" : groupId;
     }
@@ -78,18 +88,12 @@ public class ContentPackage {
         return moduleIsContentPackage;
     }
 
-    public Collection<Artifact> getMatchingArtifacts(final MavenProject project) {
-        // get artifacts depending on whether we exclude transitives or not
-        final Set<Artifact> artifacts;
-        // TODO: when I ran the tests the artifacts where only available in the Dependency Artifacts and
-        //       getArtifacts() returned an empty set
-        if (excludeTransitive) {
-            // only direct dependencies, transitives excluded
-            artifacts = project.getDependencyArtifacts();
-        } else {
-            // all dependencies, transitives included
-            artifacts = project.getArtifacts();
-        }
+    public Collection<Artifact> getMatchingArtifacts(final MavenProject project, RepositorySystem repoSystem, RepositorySystemSession repoSession) {
+        // Get artifacts via Aether
+        org.eclipse.aether.artifact.Artifact art = new org.eclipse.aether.artifact.DefaultArtifact(
+                project.getGroupId(), project.getArtifactId(), project.getArtifact().getType(), project.getVersion());
+        final Set<Artifact> artifacts = getDependencies(repoSystem, repoSession, art, !excludeTransitive);
+
         // Add the project artifact itself to convert after building a content package
         if(moduleIsContentPackage) {
             Artifact projectArtifact = project.getArtifact();
@@ -97,6 +101,34 @@ public class ContentPackage {
             artifacts.add(projectArtifact);
         }
         return getMatchingArtifacts(artifacts);
+    }
+
+    private static Set<Artifact> getDependencies(final RepositorySystem repoSystem, final RepositorySystemSession repoSession,
+            final org.eclipse.aether.artifact.Artifact artifact, final boolean includeTransitive) {
+        try {
+            Dependency dep = new Dependency(artifact, "compile");
+            CollectRequest req = new CollectRequest(dep, null);
+            DependencyResult deps = repoSystem.resolveDependencies(repoSession, new DependencyRequest(req, null));
+            DependencyNode root = deps.getRoot();
+
+            Set<Artifact> result = new HashSet<>();
+            for (DependencyNode child : root.getChildren()) {
+                org.eclipse.aether.artifact.Artifact aetherArt = child.getArtifact();
+
+                Artifact mavenArt = new DefaultArtifact(
+                        aetherArt.getGroupId(), aetherArt.getArtifactId(), aetherArt.getVersion(), null, aetherArt.getExtension(),
+                        aetherArt.getClassifier(), null);
+                mavenArt.setFile(aetherArt.getFile());
+                result.add(mavenArt);
+
+                if (includeTransitive) {
+                    result.addAll(getDependencies(repoSystem, repoSession, aetherArt, includeTransitive));
+                }
+            }
+            return result;
+        } catch (RepositoryException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public Collection<Artifact> getMatchingArtifacts(final Collection<Artifact> artifacts) {
