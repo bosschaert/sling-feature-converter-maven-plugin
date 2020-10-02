@@ -18,6 +18,7 @@ package org.apache.sling.cpconverter.maven.mojos;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
+import org.apache.maven.artifact.handler.ArtifactHandler;
 import org.apache.maven.project.MavenProject;
 import org.eclipse.aether.RepositoryException;
 import org.eclipse.aether.RepositorySystem;
@@ -25,6 +26,8 @@ import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.collection.CollectRequest;
 import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.graph.DependencyNode;
+import org.eclipse.aether.resolution.ArtifactRequest;
+import org.eclipse.aether.resolution.ArtifactResult;
 import org.eclipse.aether.resolution.DependencyRequest;
 import org.eclipse.aether.resolution.DependencyResult;
 
@@ -34,6 +37,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -58,6 +62,8 @@ public class ContentPackage {
     private boolean excludeTransitive;
 
     private boolean moduleIsContentPackage;
+
+    private ArtifactHandler artifactHandler = new NullArtifactHandler(); // TODO
 
     public void setGroupId(String groupId) {
         this.groupId = groupId == null ? "" : groupId;
@@ -89,10 +95,20 @@ public class ContentPackage {
     }
 
     public Collection<Artifact> getMatchingArtifacts(final MavenProject project, RepositorySystem repoSystem, RepositorySystemSession repoSession) {
+        /* TODO why doesn't this work?
         // Get artifacts via Aether
         org.eclipse.aether.artifact.Artifact art = new org.eclipse.aether.artifact.DefaultArtifact(
                 project.getGroupId(), project.getArtifactId(), project.getArtifact().getType(), project.getVersion());
         final Set<Artifact> artifacts = getDependencies(repoSystem, repoSession, art, !excludeTransitive);
+        */
+        List<org.apache.maven.model.Dependency> deps = project.getDependencies();
+        List<org.eclipse.aether.artifact.Artifact> arts = depsToArtifacts(deps);
+
+        Set<Artifact> artifacts = new HashSet<>();
+        for (org.eclipse.aether.artifact.Artifact art : arts) {
+//            artifacts.addAll(getDependencies(repoSystem, repoSession, art, !excludeTransitive));
+            artifacts.add(resolveArtifact(repoSystem, repoSession, art));
+        }
 
         // Add the project artifact itself to convert after building a content package
         if(moduleIsContentPackage) {
@@ -103,7 +119,51 @@ public class ContentPackage {
         return getMatchingArtifacts(artifacts);
     }
 
-    private static Set<Artifact> getDependencies(final RepositorySystem repoSystem, final RepositorySystemSession repoSession,
+    private List<org.eclipse.aether.artifact.Artifact> depsToArtifacts(List<org.apache.maven.model.Dependency> deps) {
+        return deps
+            .stream()
+            .map(d -> new org.eclipse.aether.artifact.DefaultArtifact(
+                    d.getGroupId(), d.getArtifactId(),
+                    d.getClassifier(), d.getType(),
+                    d.getVersion()))
+            .collect(Collectors.toList());
+
+        /*
+        org.eclipse.aether.artifact.Artifact a = null;
+
+        a = new org.eclipse.aether.artifact.DefaultArtifact(
+                a.getGroupId(), a.getArtifactId(), a.getVersion(), null,
+                a.getExtension(), a.getClassifier(), artifactHandler);
+
+        return deps
+            .stream()
+            .map(d -> new DefaultArtifact(d.getGroupId(), d.getArtifactId(), d.getVersion(),
+                    null, d.getType(), d.getClassifier(), artifactHandler))
+            .collect(Collectors.toList());
+            */
+    }
+
+    private Artifact resolveArtifact(final RepositorySystem repoSystem, final RepositorySystemSession repoSession,
+            final org.eclipse.aether.artifact.Artifact artifact) {
+        try {
+            ArtifactRequest req = new ArtifactRequest(artifact, null, null);
+            ArtifactResult res = repoSystem.resolveArtifact(repoSession, req);
+
+            if (res.isResolved()) {
+                org.eclipse.aether.artifact.Artifact aetherArt = res.getArtifact();
+                Artifact mavenArt = new DefaultArtifact(
+                        aetherArt.getGroupId(), aetherArt.getArtifactId(), aetherArt.getVersion(), null, aetherArt.getExtension(),
+                        aetherArt.getClassifier(), artifactHandler);
+                mavenArt.setFile(aetherArt.getFile());
+                return mavenArt;
+            }
+        } catch (RepositoryException e) {
+            throw new RuntimeException(e);
+        }
+        return null;
+    }
+
+    private Set<Artifact> getDependencies(final RepositorySystem repoSystem, final RepositorySystemSession repoSession,
             final org.eclipse.aether.artifact.Artifact artifact, final boolean includeTransitive) {
         try {
             Dependency dep = new Dependency(artifact, "compile");
@@ -117,7 +177,7 @@ public class ContentPackage {
 
                 Artifact mavenArt = new DefaultArtifact(
                         aetherArt.getGroupId(), aetherArt.getArtifactId(), aetherArt.getVersion(), null, aetherArt.getExtension(),
-                        aetherArt.getClassifier(), null);
+                        aetherArt.getClassifier(), artifactHandler);
                 mavenArt.setFile(aetherArt.getFile());
                 result.add(mavenArt);
 
@@ -170,5 +230,44 @@ public class ContentPackage {
 
     public String toString() {
         return toString(null).toString();
+    }
+
+    private static class NullArtifactHandler implements ArtifactHandler {
+        // TODO this is a temp workaround
+
+        @Override
+        public String getExtension() {
+            return null;
+        }
+
+        @Override
+        public String getDirectory() {
+            return null;
+        }
+
+        @Override
+        public String getClassifier() {
+            return null;
+        }
+
+        @Override
+        public String getPackaging() {
+            return null;
+        }
+
+        @Override
+        public boolean isIncludesDependencies() {
+            return false;
+        }
+
+        @Override
+        public String getLanguage() {
+            return null;
+        }
+
+        @Override
+        public boolean isAddedToClasspath() {
+            return false;
+        }
     }
 }

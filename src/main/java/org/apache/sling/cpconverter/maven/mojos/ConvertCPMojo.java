@@ -59,7 +59,7 @@ import static org.apache.sling.feature.cpconverter.ContentPackage2FeatureModelCo
     requiresProject = true,
     threadSafe = true
 )
-public final class ConvertCPMojo
+public class ConvertCPMojo
     extends AbstractBaseMojo
 {
     public static final String CFG_STRICT_VALIDATION = "strictValidation";
