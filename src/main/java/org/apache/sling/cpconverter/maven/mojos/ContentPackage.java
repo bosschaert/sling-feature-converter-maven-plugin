@@ -111,6 +111,8 @@ public class ContentPackage {
                     Artifact fileArt = resolveArtifact(repoSystem, repoSession, a);
                     if (fileArt != null) {
                         fileArtifacts.add(fileArt);
+                    } else {
+                        throw new RuntimeException("Unable to resolve artifact: " + a);
                     }
                 }
             }
