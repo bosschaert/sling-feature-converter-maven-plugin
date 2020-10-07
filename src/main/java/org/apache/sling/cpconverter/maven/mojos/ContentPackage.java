@@ -17,16 +17,24 @@
 package org.apache.sling.cpconverter.maven.mojos;
 
 import org.apache.maven.artifact.Artifact;
+import org.apache.maven.artifact.DefaultArtifact;
+import org.apache.maven.artifact.handler.DefaultArtifactHandler;
 import org.apache.maven.project.MavenProject;
+import org.eclipse.aether.RepositoryException;
+import org.eclipse.aether.RepositorySystem;
+import org.eclipse.aether.RepositorySystemSession;
+import org.eclipse.aether.resolution.ArtifactRequest;
+import org.eclipse.aether.resolution.ArtifactResult;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public class ContentPackage {
 
@@ -48,7 +56,7 @@ public class ContentPackage {
     private boolean excludeTransitive;
 
     private boolean moduleIsContentPackage;
-    
+
     public void setGroupId(String groupId) {
         this.groupId = groupId == null ? "" : groupId;
     }
@@ -78,7 +86,8 @@ public class ContentPackage {
         return moduleIsContentPackage;
     }
 
-    public Collection<Artifact> getMatchingArtifacts(final MavenProject project) {
+    Collection<Artifact> getMatchingArtifacts(final MavenProject project,
+            RepositorySystem repoSystem, RepositorySystemSession repoSession) {
         // get artifacts depending on whether we exclude transitives or not
         final Set<Artifact> artifacts;
         // TODO: when I ran the tests the artifacts where only available in the Dependency Artifacts and
@@ -90,13 +99,59 @@ public class ContentPackage {
             // all dependencies, transitives included
             artifacts = project.getArtifacts();
         }
+
+        // Sometimes artifacts don't have their 'file' attribute set, which we need. For those that don't, resolve them
+        final Set<Artifact> fileArtifacts = new HashSet<>();
+        for (Artifact a : artifacts) {
+            if (a.getFile() != null) {
+                fileArtifacts.add(a);
+            } else {
+                if (repoSystem != null && repoSession != null) {
+                    // Resolving the artifact via Aether will fill in the file attribute
+                    Artifact fileArt = resolveArtifact(repoSystem, repoSession, a);
+                    if (fileArt != null) {
+                        fileArtifacts.add(fileArt);
+                    } else {
+                        throw new RuntimeException("Unable to resolve artifact: " + a);
+                    }
+                }
+            }
+        }
+
         // Add the project artifact itself to convert after building a content package
         if(moduleIsContentPackage) {
             Artifact projectArtifact = project.getArtifact();
             System.out.println("Project Artifact: " + projectArtifact);
-            artifacts.add(projectArtifact);
+            fileArtifacts.add(projectArtifact);
         }
-        return getMatchingArtifacts(artifacts);
+        return getMatchingArtifacts(fileArtifacts);
+    }
+
+    private Artifact resolveArtifact(final RepositorySystem repoSystem, final RepositorySystemSession repoSession,
+            final Artifact artifact) {
+        try {
+            // Get an Aether Artifact
+            org.eclipse.aether.artifact.Artifact a = new org.eclipse.aether.artifact.DefaultArtifact(
+                    artifact.getGroupId(), artifact.getArtifactId(),
+                    artifact.getClassifier(), artifact.getType(),
+                    artifact.getVersion());
+
+            ArtifactRequest req = new ArtifactRequest(a, null, null);
+            ArtifactResult res = repoSystem.resolveArtifact(repoSession, req);
+
+            if (res.isResolved()) {
+                org.eclipse.aether.artifact.Artifact aetherArt = res.getArtifact();
+                Artifact mavenArt = new DefaultArtifact(
+                        aetherArt.getGroupId(), aetherArt.getArtifactId(), aetherArt.getVersion(), null, aetherArt.getExtension(),
+                        aetherArt.getClassifier(), new DefaultArtifactHandler());
+                mavenArt.setFile(aetherArt.getFile());
+                return mavenArt;
+            } else {
+                return null;
+            }
+        } catch (RepositoryException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public Collection<Artifact> getMatchingArtifacts(final Collection<Artifact> artifacts) {
