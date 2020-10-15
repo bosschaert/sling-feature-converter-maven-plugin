@@ -84,6 +84,10 @@ public class ConvertCPMojo
 
     public static final String CFG_IS_CONTENT_PACKAGE = "isContentPackage";
 
+    public static final String CFG_API_REGIONS = "apiRegions";
+
+    public static final String CFP_EXPORT_TO_API_REGION = "exportToApiRegion";
+
     public static final boolean DEFAULT_STRING_VALIDATION = false;
 
     public static final boolean DEFAULT_MERGE_CONFIGURATIONS = false;
@@ -165,6 +169,19 @@ public class ConvertCPMojo
     @Parameter(property = CFG_IS_CONTENT_PACKAGE, defaultValue = DEFAULT_IS_CONTENT_PACKAGE + "")
     private boolean isContentPackage;
 
+    /**
+     * Specify the API Regions that the generated feature is made part of
+     */
+    @Parameter(property = CFG_API_REGIONS)
+    private List<String> apiRegions;
+
+    /**
+     * Specify the API Region to export all exported packages to, if not specified
+     * packages will not be added to the api-regions extension.
+     */
+    @Parameter(property = CFP_EXPORT_TO_API_REGION)
+    private String exportToApiRegion;
+
     @Parameter(defaultValue="${repositorySystemSession}")
     private RepositorySystemSession repoSession;
 
@@ -195,16 +212,23 @@ public class ConvertCPMojo
             }
         }
         try {
+            DefaultFeaturesManager featuresManager = new DefaultFeaturesManager(
+                mergeConfigurations,
+                bundleStartOrder,
+                fmOutput,
+                artifactIdOverride,
+                fmPrefix,
+                properties
+            );
+            if (!apiRegions.isEmpty())
+                featuresManager.setAPIRegions(apiRegions);
+
+            if (exportToApiRegion != null)
+                featuresManager.setExportToAPIRegion(exportToApiRegion);
+
             ContentPackage2FeatureModelConverter converter = new ContentPackage2FeatureModelConverter(strictValidation)
                 .setFeaturesManager(
-                    new DefaultFeaturesManager(
-                        mergeConfigurations,
-                        bundleStartOrder,
-                        fmOutput,
-                        artifactIdOverride,
-                        fmPrefix,
-                        properties
-                    )
+                    featuresManager
                 )
                 .setBundlesDeployer(
                     new DefaultArtifactsDeployer(
@@ -232,9 +256,9 @@ public class ConvertCPMojo
                 }
             } else {
                 for(ContentPackage contentPackage: contentPackages) {
-                    getLog().info("Content Package Artifact File: " + contentPackage.toString() + ", is module CP: " + isContentPackage);
                     contentPackage.setExcludeTransitive(true);
                     contentPackage.setModuleIsContentPackage(isContentPackage);
+                    getLog().info("Content Package Artifact File: " + contentPackage.toString() + ", is module CP: " + isContentPackage);
                     final Collection<Artifact> artifacts = contentPackage.getMatchingArtifacts(project, repoSystem, repoSession);
                     if (artifacts.isEmpty()) {
                         getLog().warn("No matching artifacts for " + contentPackage);
