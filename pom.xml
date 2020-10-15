@@ -158,6 +158,11 @@
             <scope>runtime</scope>
         </dependency>
         <dependency>
+            <groupId>org.apache.felix</groupId>
+            <artifactId>org.apache.felix.utils</artifactId>
+            <version>1.11.4</version>
+        </dependency>
+        <dependency>
             <groupId>org.apache.sling</groupId>
             <artifactId>org.apache.sling.feature.cpconverter</artifactId>
             <version>1.0.15-SNAPSHOT</version>
