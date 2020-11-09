@@ -268,7 +268,7 @@ public class ConvertCPMojo
                     for (final Artifact artifact : artifacts) {
                         final File source = artifact.getFile();
                         getLog().info("Artifact: '" + artifact + "', source file: '" + source + "'");
-                        if (source.exists() && source.isFile() && source.canRead()) {
+                        if (source != null && source.exists() && source.isFile() && source.canRead()) {
                             converter.convert(source);
                             Artifact convertedPackage = new DefaultArtifact(
                                 artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion(),
