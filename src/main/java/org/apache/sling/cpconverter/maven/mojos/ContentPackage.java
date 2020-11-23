@@ -23,6 +23,7 @@ import org.apache.maven.project.MavenProject;
 import org.eclipse.aether.RepositoryException;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
+import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResult;
 
@@ -87,7 +88,8 @@ public class ContentPackage {
     }
 
     Collection<Artifact> getMatchingArtifacts(final MavenProject project,
-            RepositorySystem repoSystem, RepositorySystemSession repoSession) {
+            RepositorySystem repoSystem, RepositorySystemSession repoSession,
+            List<RemoteRepository> remoteRepos) {
         // get artifacts depending on whether we exclude transitives or not
         final Set<Artifact> artifacts;
         // TODO: when I ran the tests the artifacts where only available in the Dependency Artifacts and
@@ -108,7 +110,7 @@ public class ContentPackage {
             } else {
                 if (repoSystem != null && repoSession != null) {
                     // Resolving the artifact via Aether will fill in the file attribute
-                    Artifact fileArt = resolveArtifact(repoSystem, repoSession, a);
+                    Artifact fileArt = resolveArtifact(repoSystem, repoSession, remoteRepos, a);
                     if (fileArt != null) {
                         fileArtifacts.add(fileArt);
                     } else {
@@ -128,7 +130,7 @@ public class ContentPackage {
     }
 
     private Artifact resolveArtifact(final RepositorySystem repoSystem, final RepositorySystemSession repoSession,
-            final Artifact artifact) {
+            final List<RemoteRepository> remoteRepos, final Artifact artifact) {
         try {
             // Get an Aether Artifact
             org.eclipse.aether.artifact.Artifact a = new org.eclipse.aether.artifact.DefaultArtifact(
@@ -136,7 +138,7 @@ public class ContentPackage {
                     artifact.getClassifier(), artifact.getType(),
                     artifact.getVersion());
 
-            ArtifactRequest req = new ArtifactRequest(a, null, null);
+            ArtifactRequest req = new ArtifactRequest(a, remoteRepos, null);
             ArtifactResult res = repoSystem.resolveArtifact(repoSession, req);
 
             if (res.isResolved()) {
