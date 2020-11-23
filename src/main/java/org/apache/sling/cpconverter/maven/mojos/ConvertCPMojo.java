@@ -34,6 +34,7 @@ import org.apache.sling.feature.cpconverter.handlers.DefaultEntryHandlersManager
 import org.apache.sling.feature.cpconverter.vltpkg.DefaultPackagesEventsEmitter;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
+import org.eclipse.aether.repository.RemoteRepository;
 
 import java.io.File;
 import java.io.IOException;
@@ -188,6 +189,9 @@ public class ConvertCPMojo
     @Component
     private RepositorySystem repoSystem;
 
+    @Parameter(defaultValue = "${project.remotePluginRepositories}", readonly = true)
+    private List<RemoteRepository> remoteRepos;
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         // Un-encode a given Artifact Override Id
@@ -259,7 +263,8 @@ public class ConvertCPMojo
                     contentPackage.setExcludeTransitive(true);
                     contentPackage.setModuleIsContentPackage(isContentPackage);
                     getLog().info("Content Package Artifact File: " + contentPackage.toString() + ", is module CP: " + isContentPackage);
-                    final Collection<Artifact> artifacts = contentPackage.getMatchingArtifacts(project, repoSystem, repoSession);
+                    final Collection<Artifact> artifacts =
+                            contentPackage.getMatchingArtifacts(project, repoSystem, repoSession, remoteRepos);
                     if (artifacts.isEmpty()) {
                         getLog().warn("No matching artifacts for " + contentPackage);
                         continue;
