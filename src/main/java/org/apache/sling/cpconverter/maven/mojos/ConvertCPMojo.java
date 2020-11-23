@@ -189,7 +189,7 @@ public class ConvertCPMojo
     @Component
     private RepositorySystem repoSystem;
 
-    @Parameter(defaultValue = "${project.remotePluginRepositories}", readonly = true)
+    @Parameter(defaultValue = "${project.remoteProjectRepositories}", readonly = true)
     private List<RemoteRepository> remoteRepos;
 
     @Override
