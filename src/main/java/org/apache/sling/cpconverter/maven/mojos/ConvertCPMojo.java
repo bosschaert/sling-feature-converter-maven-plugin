@@ -30,6 +30,8 @@ import org.apache.sling.feature.cpconverter.ContentPackage2FeatureModelConverter
 import org.apache.sling.feature.cpconverter.acl.DefaultAclManager;
 import org.apache.sling.feature.cpconverter.artifacts.DefaultArtifactsDeployer;
 import org.apache.sling.feature.cpconverter.features.DefaultFeaturesManager;
+import org.apache.sling.feature.cpconverter.filtering.RegexBasedResourceFilter;
+import org.apache.sling.feature.cpconverter.filtering.ResourceFilter;
 import org.apache.sling.feature.cpconverter.handlers.DefaultEntryHandlersManager;
 import org.apache.sling.feature.cpconverter.vltpkg.DefaultPackagesEventsEmitter;
 import org.eclipse.aether.RepositorySystem;
@@ -87,7 +89,9 @@ public class ConvertCPMojo
 
     public static final String CFG_API_REGIONS = "apiRegions";
 
-    public static final String CFP_EXPORT_TO_API_REGION = "exportToApiRegion";
+    public static final String CFG_EXPORT_TO_API_REGION = "exportToApiRegion";
+
+    public static final String CFG_FILTER_PATTERNS = "filterPatterns";
 
     public static final boolean DEFAULT_STRING_VALIDATION = false;
 
@@ -180,8 +184,14 @@ public class ConvertCPMojo
      * Specify the API Region to export all exported packages to, if not specified
      * packages will not be added to the api-regions extension.
      */
-    @Parameter(property = CFP_EXPORT_TO_API_REGION)
+    @Parameter(property = CFG_EXPORT_TO_API_REGION)
     private String exportToApiRegion;
+
+    /**
+     * Regex based pattern(s) to reject content-package archive entries.
+     */
+    @Parameter(property = CFG_FILTER_PATTERNS)
+    private List<String> filterPatterns;
 
     @Parameter(defaultValue="${repositorySystemSession}")
     private RepositorySystemSession repoSession;
@@ -245,7 +255,8 @@ public class ConvertCPMojo
                 .setAclManager(
                     new DefaultAclManager()
                 )
-                .setEmitter(DefaultPackagesEventsEmitter.open(fmOutput));
+                .setEmitter(DefaultPackagesEventsEmitter.open(fmOutput))
+                .setResourceFilter(getResourceFilter());
 
             if(contentPackages == null || contentPackages.isEmpty()) {
                 getLog().info("Project Artifact File: " + project.getArtifact());
@@ -291,6 +302,18 @@ public class ConvertCPMojo
             throw new MojoExecutionException("Content Package Converter Exception", t);
         }
 
+    }
+
+    private ResourceFilter getResourceFilter() {
+        if (filterPatterns == null || filterPatterns.size() == 0)
+            return null;
+
+        RegexBasedResourceFilter filter = new RegexBasedResourceFilter();
+        for (String filterPattern : filterPatterns) {
+            filter.addFilteringPattern(filterPattern);
+        }
+
+        return filter;
     }
 
     /**
